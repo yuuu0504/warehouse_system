@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>進貨單管理 (Inbound Order) - 物流倉儲管理系統</title>
+    <title>客戶訂單管理 (Sales Order) - 物流倉儲管理系統</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -30,10 +30,11 @@
                 
                 <span class="text-secondary mx-2">|</span>
                 
-                <a class="nav-link active text-warning me-3" href="Purchaseorder.html">
+                <a class="nav-link text-warning me-3" href="Purchaseorder.html">
                     <i class="fas fa-file-import me-1"></i>進貨單
                 </a>
-                <a class="nav-link text-success me-3" href="order.html">
+                
+                <a class="nav-link active text-success me-3" href="order.html">
                     <i class="fas fa-file-invoice-dollar me-1"></i>訂單
                 </a>
 
@@ -49,9 +50,9 @@
     <div class="container mt-4">
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="fas fa-file-import me-2"></i>進貨單管理 (Inbound Order)</h2>
-            <button class="btn btn-warning text-dark">
-                <i class="fas fa-plus me-1"></i> 新增進貨單
+            <h2><i class="fas fa-file-invoice-dollar me-2"></i>客戶訂單管理 (Sales Order)</h2>
+            <button class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> 新增訂單
             </button>
         </div>
 
@@ -59,10 +60,10 @@
             <div class="card-body">
                 <form class="row g-3">
                     <div class="col-md-7">
-                        <input type="text" class="form-control" placeholder="搜尋單號、供應商ID或員工ID...">
+                        <input type="text" class="form-control" placeholder="搜尋訂單號、客戶ID或員工ID...">
                     </div>
                     <div class="col-md-3">
-                        <input type="date" class="form-control" title="選擇進貨日期">
+                        <input type="date" class="form-control" title="選擇訂單日期">
                     </div>
                     <div class="col-md-2">
                         <button type="button" class="btn btn-outline-secondary w-100">搜尋</button>
@@ -76,28 +77,19 @@
                 <table class="table table-striped table-hover mb-0 align-middle">
                     <thead class="table-dark">
                         <tr>
-                            <th>進貨單號 (ID)</th>
-                            <th>進貨日期 (Date)</th>
-                            <th>供應商ID (SupplierID)</th>
-                            <th>員工ID (EmployeeID)</th> <th class="text-end pe-4">操作</th>
+                            <th>訂單單號 (Order ID)</th>
+                            <th>訂單日期 (Order Date)</th>
+                            <th>客戶ID (Customer ID)</th>
+                            <th>員工ID (Employee ID)</th>
+                            <th class="text-end pe-4">操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         
                         <tr>
-                            <td class="fw-bold">PO-2023120101</td>
-                            <td>2023-12-01</td>
-                            <td>SUP-001</td>
-                            <td>EMP-102</td> <td class="text-end pe-3">
-                                <button class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="alert('前端展示：刪除')"><i class="fas fa-trash-alt"></i></button>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td class="fw-bold">PO-2023120502</td>
-                            <td>2023-12-05</td>
-                            <td>SUP-005</td>
+                            <td class="fw-bold">SO-2023122001</td>
+                            <td>2023-12-20</td>
+                            <td>CUST-001</td>
                             <td>EMP-102</td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></button>
@@ -106,9 +98,20 @@
                         </tr>
 
                         <tr>
-                            <td class="fw-bold">PO-2023121005</td>
-                            <td>2023-12-10</td>
-                            <td>SUP-002</td>
+                            <td class="fw-bold">SO-2023122105</td>
+                            <td>2023-12-21</td>
+                            <td>CUST-008</td>
+                            <td>EMP-105</td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="alert('前端展示：刪除')"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="fw-bold">SO-2023122203</td>
+                            <td>2023-12-22</td>
+                            <td>CUST-002</td>
                             <td>EMP-201</td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></button>
@@ -117,10 +120,10 @@
                         </tr>
 
                          <tr>
-                            <td class="fw-bold">PO-2023112803</td>
-                            <td>2023-11-28</td>
-                            <td>SUP-008</td>
-                            <td>EMP-105</td>
+                            <td class="fw-bold">SO-2023122501</td>
+                            <td>2023-12-25</td>
+                            <td>CUST-015</td>
+                            <td>EMP-102</td>
                             <td class="text-end pe-3">
                                 <button class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="alert('前端展示：刪除')"><i class="fas fa-trash-alt"></i></button>
@@ -130,6 +133,26 @@
                     </tbody>
                 </table>
             </div>
+            
+            <div class="card-footer bg-white d-flex justify-content-end py-3">
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">上一頁</a>
+                        </li>
+                        <li class="page-item active">
+                            <a class="page-link" href="#">1</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">2</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">下一頁</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
         </div>
     </div>
 
