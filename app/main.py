@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from app.api import products, staffs, suppliers, inboundorders
+from app.api import products, staffs, suppliers, inboundorders, warehouse
 
 app = FastAPI(title="物流倉儲管理系統 API", version="1.0.0")
 
@@ -9,6 +9,7 @@ app.include_router(products.router, prefix="/api/v1")
 app.include_router(suppliers.router, prefix="/api/v1")
 app.include_router(staffs.router, prefix="/api/v1")
 app.include_router(inboundorders.router, prefix="/api/v1")
+app.include_router(warehouse.router, prefix="/api/v1")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
