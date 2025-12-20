@@ -1,16 +1,18 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from typing import List
 from app.schemas.product import Product, ProductCreate
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
-fake_db_products = [
-    {"ProductID": 1, "prName": "無線藍芽耳機", "prSpec": "V5.3", "prCategory": "電子產品"},
-]
+
+fake_db_products = [{"ProductID": i, "prName": f"商品 {i}", "prSpec": "標準", "prCategory": "電子產品", "prPrice": 100.0} for i in range(1, 21)]
 
 @router.get("/", response_model=List[Product])
-async def get_all_products():
-    return fake_db_products
+async def get_products(
+    skip: int = Query(0, ge=0, description="跳過前 N 筆"),
+    limit: int = Query(10, le=100, description="限制回傳 N 筆 (Top)")
+):
+    return fake_db_products[skip : skip + limit]
 
 @router.get("/{product_id}", response_model=Product)
 async def get_product(product_id: int):

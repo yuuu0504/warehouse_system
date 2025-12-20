@@ -1,9 +1,19 @@
-from fastapi import FastAPI
-from app.api import products
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from app.api import products, suppliers
 
 app = FastAPI(title="物流倉儲管理系統 API", version="1.0.0")
 
 app.include_router(products.router, prefix="/api/v1")
+app.include_router(suppliers.router, prefix="/api/v1")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/view/{page_name}")
+async def render_template(request: Request, page_name: str):
+    return templates.TemplateResponse(f"{page_name}", {"request": request})
 
 @app.get("/")
 async def root():
