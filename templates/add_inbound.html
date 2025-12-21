@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增進貨單 - 物流倉儲管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">物流倉儲管理系統</a>
+            <a href="/inbound" class="btn btn-outline-light btn-sm">返回列表</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">新增進貨單</h4>
+                    </div>
+                    <div class="card-body">
+                        
+                        <form action="/inbound/add" method="POST">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">進貨日期 (Date) <span class="text-danger">*</span></label>
+                                <input type="date" name="ioDate" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">商品 (Product) <span class="text-danger">*</span></label>
+                                <select name="ProductID" class="form-select" required>
+                                    <option value="" disabled selected>請選擇商品...</option>
+                                    {% for p in products %}
+                                        <option value="{{ p.ProductID }}">{{ p.prName }} ({{ p.prSpec }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">進貨數量 (Quantity) <span class="text-danger">*</span></label>
+                                <input type="number" name="ioQuantity" class="form-control" required min="1" placeholder="例如：100">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">供應商 (Supplier) <span class="text-danger">*</span></label>
+                                <select name="SupplierID" class="form-select" required>
+                                    <option value="" disabled selected>請選擇供應商...</option>
+                                    {% for s in suppliers %}
+                                        <option value="{{ s.SupplierID }}">{{ s.suName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">入庫倉庫 (Warehouse) <span class="text-danger">*</span></label>
+                                <select name="WarehouseID" class="form-select" required>
+                                    <option value="" disabled selected>請選擇倉庫...</option>
+                                    {% for w in warehouses %}
+                                        <option value="{{ w.WarehouseID }}">{{ w.waName }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                             <div class="mb-3">
+                                <label class="form-label">經手員工 (Staff) <span class="text-danger">*</span></label>
+                                <select name="StaffID" class="form-select" required>
+                                    <option value="" disabled selected>請選擇員工...</option>
+                                    {% for st in staff_list %}
+                                        <option value="{{ st.StaffID }}">{{ st.stName }} ({{ st.stDept }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/inbound" class="btn btn-secondary me-md-2">取消</a>
+                                <button type="submit" class="btn btn-warning">建立進貨單</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
