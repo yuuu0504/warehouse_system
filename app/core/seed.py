@@ -6,6 +6,7 @@ from app.models.staff import Staff
 from app.models.supplier import Supplier
 from app.models.inbound_order import InboundDetail, InboundOrder
 from app.models.warehouse import Warehouse
+from app.models.requisition import Requisition, ReqDetail
 
 # --- Seed Staff ---
 INITIAL_STAFF = [
@@ -41,6 +42,17 @@ INITIAL_INBOUNDS = [
         "details": [
             {"ProductID": 1, "idQuantity": 50, "WarehouseID": 101},
             {"ProductID": 2, "idQuantity": 20, "WarehouseID": 101},
+        ]
+    }
+]
+
+# --- Seed Requisition ---
+INITIAL_REQUISITIONS = [
+    {
+        "ReqID": 2023120201, "reDate": date(2023, 12, 2), "reReason": "產線領料", "StaffID": 2,
+        "details": [
+            {"ProductID": 1, "rdQuantity": 10, "WarehouseID": 101},
+            {"ProductID": 2, "rdQuantity": 5, "WarehouseID": 101},
         ]
     }
 ]
@@ -94,6 +106,25 @@ async def create_initial_data(db: AsyncSession):
 
             for d in details_data:
                 detail = InboundDetail(InboundID=order.InboundID, **d)
+                db.add(detail)
+        
+        await db.commit()
+
+    result = await db.exec(select(Requisition))
+    if not result.first():
+        print("🌱 Seeding Requisition data...")
+        for data in INITIAL_REQUISITIONS:
+            # 1. 取出明細資料
+            details_data = data.pop("details")
+            
+            # 2. 建立主單
+            req = Requisition(**data)
+            db.add(req)
+            # 因為我們有手動指定 ReqID，所以可以直接 add details
+            
+            # 3. 建立明細
+            for d in details_data:
+                detail = ReqDetail(ReqID=req.ReqID, **d)
                 db.add(detail)
         
         await db.commit()
