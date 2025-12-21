@@ -11,3 +11,7 @@ __pycache__/
 .vscode/
 
 local_dev.db
+pg_data/
+*.db
+*.sqlite
+*.sqlite3

@@ -1,67 +1,74 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List, Optional
-from app.schemas.staff import Staff, StaffCreate
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.schemas.staff import Staff as StaffSchema, StaffCreate
+from app.models.staff import Staff as StaffModel
+from app.core.database import get_db
 
 router = APIRouter(prefix="/staff", tags=["Staff"])
 
-# 模擬資料庫：員工
-fake_db_staff = [
-    {"StaffID": 1, "stName": "Admin", "stDept": "管理部"},
-    {"StaffID": 2, "stName": "張倉管", "stDept": "倉庫部"},
-    {"StaffID": 3, "stName": "李採購", "stDept": "採購部"},
-]
-
-@router.get("/", response_model=List[Staff])
+@router.get("/", response_model=List[StaffSchema])
 async def get_all_staff(
     q: Optional[str] = Query(None, description="搜尋員工姓名或部門"),
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, le=100)
+    limit: int = Query(10, ge=0, le=100),
+    db: AsyncSession = Depends(get_db) # DI DB Session
 ):
-    results = fake_db_staff
+    statement = select(StaffModel)
     
-    # 搜尋邏輯
     if q:
-        q_lower = q.lower()
-        results = [
-            s for s in results 
-            if q_lower in s["stName"].lower() or q_lower in s["stDept"].lower()
-        ]
+        statement = statement.where(
+            (StaffModel.stName.contains(q)) | (StaffModel.stDept.contains(q))
+        )
+    
+    if limit > 0:
+        statement = statement.offset(skip).limit(limit)
+    
+    result = await db.exec(statement)
+    return result.all()
 
-    return results[skip : skip + limit]
-
-@router.get("/{staff_id}", response_model=Staff)
-async def get_staff(staff_id: int):
-    staff = next((s for s in fake_db_staff if s["StaffID"] == staff_id), None)
-    if not staff:
+@router.get("/{staff_id}", response_model=StaffSchema)
+async def get_staff(staff_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.get(StaffModel, staff_id)
+    if not result:
         raise HTTPException(status_code=404, detail="Staff not found")
-    return staff
+    return result
 
-@router.post("/", response_model=Staff, status_code=status.HTTP_201_CREATED)
-async def create_staff(staff: StaffCreate):
-    new_id = max([s["StaffID"] for s in fake_db_staff]) + 1 if fake_db_staff else 1
-    new_staff = {"StaffID": new_id, **staff.model_dump()}
-    fake_db_staff.append(new_staff)
+@router.post("/", response_model=StaffSchema, status_code=status.HTTP_201_CREATED)
+async def create_staff(staff: StaffCreate, db: AsyncSession = Depends(get_db)):
+    # 將 Schema 轉為 Model
+    new_staff = StaffModel.model_validate(staff)
+    
+    db.add(new_staff)
+    await db.commit()
+    await db.refresh(new_staff) # 刷新以取得 DB 自動生成的 StaffID
     return new_staff
 
-# --- 新增 PUT (修改) ---
-@router.put("/{staff_id}", response_model=Staff)
-async def update_staff(staff_id: int, updated_staff: StaffCreate):
-    index = next((i for i, s in enumerate(fake_db_staff) if s["StaffID"] == staff_id), None)
-    if index is None:
+@router.put("/{staff_id}", response_model=StaffSchema)
+async def update_staff(staff_id: int, updated_staff: StaffCreate, db: AsyncSession = Depends(get_db)):
+    # 先查
+    db_staff = await db.get(StaffModel, staff_id)
+    if not db_staff:
         raise HTTPException(status_code=404, detail="Staff not found")
     
-    # 更新欄位，保留 ID
-    fake_db_staff[index].update(updated_staff.model_dump())
-    fake_db_staff[index]["StaffID"] = staff_id # 確保 ID 不被覆蓋
-    return fake_db_staff[index]
+    # 更新欄位
+    staff_data = updated_staff.model_dump(exclude_unset=True)
+    for key, value in staff_data.items():
+        setattr(db_staff, key, value)
+        
+    db.add(db_staff)
+    await db.commit()
+    await db.refresh(db_staff)
+    return db_staff
 
-# --- 新增 DELETE (刪除) ---
 @router.delete("/{staff_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_staff(staff_id: int):
-    global fake_db_staff
-    initial_len = len(fake_db_staff)
-    fake_db_staff = [s for s in fake_db_staff if s["StaffID"] != staff_id]
-    
-    if len(fake_db_staff) == initial_len:
+async def delete_staff(staff_id: int, db: AsyncSession = Depends(get_db)):
+    db_staff = await db.get(StaffModel, staff_id)
+    if not db_staff:
         raise HTTPException(status_code=404, detail="Staff not found")
+        
+    await db.delete(db_staff)
+    await db.commit()
     return None
