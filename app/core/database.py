@@ -5,6 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
 load_dotenv()
 
@@ -38,3 +39,13 @@ async def init_db():
     async with engine.begin() as conn:
         # await conn.run_sync(SQLModel.metadata.drop_all) # 開發初期若要重置可打開
         await conn.run_sync(SQLModel.metadata.create_all)
+
+
+@asynccontextmanager
+async def get_db_session_context():
+    """提供給非 FastAPI Depends 使用的 Context Manager (例如 seed.py)"""
+    async_session = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+    async with async_session() as session:
+        yield session

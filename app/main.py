@@ -4,8 +4,6 @@ from fastapi.templating import Jinja2Templates
 from app.api import products, requisitions, staffs, suppliers, inboundorders, warehouse
 
 from contextlib import asynccontextmanager
-from app.models import Staff
-from app.models import Supplier
 from app.core.database import init_db, get_db_session_context
 from app.core.seed import create_initial_data
 
