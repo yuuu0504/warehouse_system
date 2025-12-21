@@ -3,6 +3,10 @@ from datetime import date
 from sqlmodel import Field, SQLModel, Relationship
 from app.schemas.requisition import RequisitionBase, ReqDetailBase
 
+from app.models.product import Product
+from app.models.warehouse import Warehouse
+from app.models.staff import Staff
+
 # --- 領料明細 Table ---
 class ReqDetail(ReqDetailBase, SQLModel, table=True):
     # 複合主鍵: ReqID + ProductID
@@ -14,6 +18,9 @@ class ReqDetail(ReqDetailBase, SQLModel, table=True):
 
     # 反向關聯回主單
     requisition: "Requisition" = Relationship(back_populates="details")
+
+    product: Optional[Product] = Relationship()
+    warehouse: Optional[Warehouse] = Relationship()
 
 # --- 領料主單 Table ---
 class Requisition(RequisitionBase, SQLModel, table=True):
@@ -29,3 +36,5 @@ class Requisition(RequisitionBase, SQLModel, table=True):
         back_populates="requisition",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"} 
     )
+
+    staff: Optional[Staff] = Relationship()

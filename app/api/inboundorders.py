@@ -18,8 +18,14 @@ async def get_inbound_orders(
     limit: int = Query(10, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    # 使用 selectinload 預先抓取 details，避免後續存取時發生錯誤或效能問題
-    statement = select(InboundOrder).options(selectinload(InboundOrder.details))
+    statement = select(InboundOrder).options(
+        selectinload(InboundOrder.details).options(
+            selectinload(InboundDetail.product),
+            selectinload(InboundDetail.warehouse)
+        ),
+        selectinload(InboundOrder.supplier),
+        selectinload(InboundOrder.staff)
+    )
     
     if io_date:
         statement = statement.where(InboundOrder.ioDate == io_date)
@@ -34,7 +40,15 @@ async def get_inbound_orders(
 
 @router.get("/{inbound_id}", response_model=InboundOrderSchema)
 async def get_inbound_order(inbound_id: int, db: AsyncSession = Depends(get_db)):
-    statement = select(InboundOrder).where(InboundOrder.InboundID == inbound_id).options(selectinload(InboundOrder.details))
+    statement = select(InboundOrder).where(InboundOrder.InboundID == inbound_id).options(
+        selectinload(InboundOrder.details).options(
+            selectinload(InboundDetail.product),
+            selectinload(InboundDetail.warehouse)
+        ),
+        selectinload(InboundOrder.supplier),
+        selectinload(InboundOrder.staff)
+    )
+    
     result = await db.exec(statement)
     order = result.first()
     
@@ -52,7 +66,7 @@ async def create_inbound_order(order_data: InboundOrderCreate, db: AsyncSession 
     # 簡單的 ID 生成策略 (若未啟用 AutoIncrement)
     # 實務上建議用 DB Sequence 或 UUID，這裡維持模擬邏輯: MAX + 1
     # 但為了原子性，最好讓 DB 處理。這裡我們先假設 InboundID 是 AutoIncrement 或 Optional
-    # 如果要保留 "2023..." 這種格式，需要另外寫邏輯。
+    # 如果要保留 "2025..." 這種格式，需要另外寫邏輯。
     # 這裡我們先讓它 Null，由 DB 決定 (或是我們手動查最大值 + 1，但有併發風險)
     
     db.add(new_order)

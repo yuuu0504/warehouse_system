@@ -19,8 +19,13 @@ async def get_requisitions(
     limit: int = Query(10, le=100),
     db: AsyncSession = Depends(get_db)
 ):
-    # 使用 selectinload 預先載入 details
-    statement = select(Requisition).options(selectinload(Requisition.details))
+    statement = select(Requisition).options(
+        selectinload(Requisition.details).options(
+            selectinload(ReqDetail.product),
+            selectinload(ReqDetail.warehouse)
+        ),
+        selectinload(Requisition.staff)
+    )
     
     if re_date:
         statement = statement.where(Requisition.reDate == re_date)
@@ -40,7 +45,14 @@ async def get_requisitions(
 
 @router.get("/{req_id}", response_model=RequisitionSchema)
 async def get_requisition(req_id: int, db: AsyncSession = Depends(get_db)):
-    statement = select(Requisition).where(Requisition.ReqID == req_id).options(selectinload(Requisition.details))
+    statement = select(Requisition).where(Requisition.ReqID == req_id).options(
+        selectinload(Requisition.details).options(
+            selectinload(ReqDetail.product),
+            selectinload(ReqDetail.warehouse)
+        ),
+        selectinload(Requisition.staff)
+    )
+    
     result = await db.exec(statement)
     req = result.first()
     
