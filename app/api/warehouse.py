@@ -67,7 +67,14 @@ async def update_warehouse(warehouse_id: int, updated_warehouse: WarehouseCreate
     await db.refresh(db_warehouse)
     return db_warehouse
 
-@router.delete("/{warehouse_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{warehouse_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"description": "Warehouse not found"},
+        400: {"description": "Integrity Error: Warehouse has stock records"}
+    }
+)
 async def delete_warehouse(warehouse_id: int, db: AsyncSession = Depends(get_db)):
     db_warehouse = await db.get(WarehouseModel, warehouse_id)
     if not db_warehouse:

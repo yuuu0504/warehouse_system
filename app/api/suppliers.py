@@ -57,7 +57,14 @@ async def update_supplier(supplier_id: int, updated_supplier: SupplierCreate, db
     await db.refresh(db_supplier)
     return db_supplier
 
-@router.delete("/{supplier_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{supplier_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"description": "Supplier not found"},
+        400: {"description": "Integrity Error: Supplier has linked inbound orders"}
+    }
+)
 async def delete_supplier(supplier_id: int, db: AsyncSession = Depends(get_db)):
     db_supplier = await db.get(SupplierModel, supplier_id)
     if not db_supplier:

@@ -58,7 +58,14 @@ async def update_product(product_id: int, updated_product: ProductCreate, db: As
     await db.refresh(db_product)
     return db_product
 
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{product_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"description": "Product not found"},
+        400: {"description": "Integrity Error: Product is used in transactions"}
+    }
+)
 async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
     db_product = await db.get(ProductModel, product_id)
     if not db_product:

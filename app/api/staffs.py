@@ -64,7 +64,14 @@ async def update_staff(staff_id: int, updated_staff: StaffCreate, db: AsyncSessi
     await db.refresh(db_staff)
     return db_staff
 
-@router.delete("/{staff_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{staff_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"description": "Staff not found"},
+        400: {"description": "Integrity Error: Staff has linked orders"}
+    }
+)
 async def delete_staff(staff_id: int, db: AsyncSession = Depends(get_db)):
     db_staff = await db.get(StaffModel, staff_id)
     if not db_staff:
