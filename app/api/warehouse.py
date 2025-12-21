@@ -7,6 +7,7 @@ from app.schemas.warehouse import Warehouse as WarehouseSchema, WarehouseCreate
 from app.models.warehouse import Warehouse as WarehouseModel
 from app.core.database import get_db
 from sqlalchemy.exc import IntegrityError
+from app.schemas.error import HTTPError
 
 router = APIRouter(prefix="/warehouse", tags=["Warehouse"])
 
@@ -71,8 +72,7 @@ async def update_warehouse(warehouse_id: int, updated_warehouse: WarehouseCreate
     "/{warehouse_id}", 
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        404: {"description": "Warehouse not found"},
-        400: {"description": "Integrity Error: Warehouse has stock records"}
+        404: {"model": HTTPError, "description": "Integrity Error: Staff has linked orders"},
     }
 )
 async def delete_warehouse(warehouse_id: int, db: AsyncSession = Depends(get_db)):

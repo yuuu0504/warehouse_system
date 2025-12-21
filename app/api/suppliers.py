@@ -7,6 +7,7 @@ from app.schemas.supplier import Supplier as SupplierSchema, SupplierCreate
 from app.models.supplier import Supplier as SupplierModel
 from app.core.database import get_db
 from sqlalchemy.exc import IntegrityError
+from app.schemas.error import HTTPError
 
 router = APIRouter(prefix="/suppliers", tags=["Suppliers"])
 
@@ -61,8 +62,7 @@ async def update_supplier(supplier_id: int, updated_supplier: SupplierCreate, db
     "/{supplier_id}", 
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        404: {"description": "Supplier not found"},
-        400: {"description": "Integrity Error: Supplier has linked inbound orders"}
+        404: {"model": HTTPError, "description": "Integrity Error: Staff has linked orders"},
     }
 )
 async def delete_supplier(supplier_id: int, db: AsyncSession = Depends(get_db)):

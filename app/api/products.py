@@ -7,6 +7,7 @@ from app.schemas.product import Product as ProductSchema, ProductCreate
 from app.models.product import Product as ProductModel
 from app.core.database import get_db
 from sqlalchemy.exc import IntegrityError
+from app.schemas.error import HTTPError
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -62,8 +63,7 @@ async def update_product(product_id: int, updated_product: ProductCreate, db: As
     "/{product_id}", 
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        404: {"description": "Product not found"},
-        400: {"description": "Integrity Error: Product is used in transactions"}
+        404: {"model": HTTPError, "description": "Integrity Error: Staff has linked orders"},
     }
 )
 async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):

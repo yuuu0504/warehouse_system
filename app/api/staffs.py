@@ -7,6 +7,7 @@ from app.schemas.staff import Staff as StaffSchema, StaffCreate
 from app.models.staff import Staff as StaffModel
 from app.core.database import get_db
 from sqlalchemy.exc import IntegrityError
+from app.schemas.error import HTTPError
 
 router = APIRouter(prefix="/staff", tags=["Staff"])
 
@@ -68,8 +69,7 @@ async def update_staff(staff_id: int, updated_staff: StaffCreate, db: AsyncSessi
     "/{staff_id}", 
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        404: {"description": "Staff not found"},
-        400: {"description": "Integrity Error: Staff has linked orders"}
+        404: {"model": HTTPError, "description": "Integrity Error: Staff has linked orders"},
     }
 )
 async def delete_staff(staff_id: int, db: AsyncSession = Depends(get_db)):
