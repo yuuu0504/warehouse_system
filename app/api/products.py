@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.product import Product as ProductSchema, ProductCreate
 from app.models.product import Product as ProductModel
 from app.core.database import get_db
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -63,6 +64,13 @@ async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    await db.delete(db_product)
-    await db.commit()
+    try:
+        await db.delete(db_product)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="無法刪除：該商品尚有庫存紀錄或存在於交易單據中(如進貨單、領料單)。"
+        )
     return None

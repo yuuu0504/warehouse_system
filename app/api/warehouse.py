@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.warehouse import Warehouse as WarehouseSchema, WarehouseCreate
 from app.models.warehouse import Warehouse as WarehouseModel
 from app.core.database import get_db
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/warehouse", tags=["Warehouse"])
 
@@ -72,6 +73,13 @@ async def delete_warehouse(warehouse_id: int, db: AsyncSession = Depends(get_db)
     if not db_warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found")
     
-    await db.delete(db_warehouse)
-    await db.commit()
+    try:
+        await db.delete(db_warehouse)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="無法刪除：該倉庫尚有庫存或交易紀錄關聯(如進貨單、領料單)。"
+        )
     return None

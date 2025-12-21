@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.schemas.supplier import Supplier as SupplierSchema, SupplierCreate
 from app.models.supplier import Supplier as SupplierModel
 from app.core.database import get_db
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/suppliers", tags=["Suppliers"])
 
@@ -62,6 +63,13 @@ async def delete_supplier(supplier_id: int, db: AsyncSession = Depends(get_db)):
     if not db_supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
         
-    await db.delete(db_supplier)
-    await db.commit()
+    try:
+        await db.delete(db_supplier)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="無法刪除：該供應商尚有未結案的進貨單。"
+        )
     return None
