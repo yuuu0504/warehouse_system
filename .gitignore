@@ -9,3 +9,9 @@ __pycache__/
 .env
 .pytest_cache/
 .vscode/
+
+local_dev.db
+pg_data/
+*.db
+*.sqlite
+*.sqlite3

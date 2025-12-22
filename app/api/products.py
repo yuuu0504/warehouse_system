@@ -1,43 +1,83 @@
-from fastapi import APIRouter, HTTPException, Query, status
-from typing import List
-from app.schemas.product import Product, ProductCreate
+from fastapi import APIRouter, HTTPException, Query, status, Depends
+from typing import List, Optional
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.schemas.product import Product as ProductSchema, ProductCreate
+from app.models.product import Product as ProductModel
+from app.core.database import get_db
+from sqlalchemy.exc import IntegrityError
+from app.schemas.error import HTTPError
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
-
-fake_db_products = [{"ProductID": i, "prName": f"商品 {i}", "prSpec": "標準", "prCategory": "電子產品", "prPrice": 100.0} for i in range(1, 21)]
-
-@router.get("/", response_model=List[Product])
+@router.get("/", response_model=List[ProductSchema])
 async def get_products(
     skip: int = Query(0, ge=0, description="跳過前 N 筆"),
-    limit: int = Query(10, le=100, description="限制回傳 N 筆 (Top)")
+    limit: int = Query(10, le=100, description="限制回傳 N 筆"),
+    q: Optional[str] = Query(None, description="搜尋產品名稱或分類"),
+    db: AsyncSession = Depends(get_db)
 ):
-    return fake_db_products[skip : skip + limit]
+    statement = select(ProductModel)
+    if q:
+        statement = statement.where(
+            (ProductModel.prName.contains(q)) | (ProductModel.prCategory.contains(q))
+        )
+    
+    if limit > 0:
+        statement = statement.offset(skip).limit(limit)
+    result = await db.exec(statement)
+    return result.all()
 
-@router.get("/{product_id}", response_model=Product)
-async def get_product(product_id: int):
-    product = next((p for p in fake_db_products if p["ProductID"] == product_id), None)
-    if not product:
+@router.get("/{product_id}", response_model=ProductSchema)
+async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.get(ProductModel, product_id)
+    if not result:
         raise HTTPException(status_code=404, detail="Product not found")
-    return product
+    return result
 
-@router.post("/", response_model=Product, status_code=status.HTTP_201_CREATED)
-async def create_product(product: ProductCreate):
-    new_id = max([p["ProductID"] for p in fake_db_products]) + 1 if fake_db_products else 1
-    new_product = {"ProductID": new_id, **product.model_dump()}
-    fake_db_products.append(new_product)
+@router.post("/", response_model=ProductSchema, status_code=status.HTTP_201_CREATED)
+async def create_product(product: ProductCreate, db: AsyncSession = Depends(get_db)):
+    new_product = ProductModel.model_validate(product)
+    db.add(new_product)
+    await db.commit()
+    await db.refresh(new_product)
     return new_product
 
-@router.put("/{product_id}", response_model=Product)
-async def update_product(product_id: int, updated_product: ProductCreate):
-    index = next((i for i, p in enumerate(fake_db_products) if p["ProductID"] == product_id), None)
-    if index is None:
+@router.put("/{product_id}", response_model=ProductSchema)
+async def update_product(product_id: int, updated_product: ProductCreate, db: AsyncSession = Depends(get_db)):
+    db_product = await db.get(ProductModel, product_id)
+    if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
-    fake_db_products[index].update(updated_product.model_dump())
-    return fake_db_products[index]
+    
+    data = updated_product.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(db_product, key, value)
+        
+    db.add(db_product)
+    await db.commit()
+    await db.refresh(db_product)
+    return db_product
 
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(product_id: int):
-    global fake_db_products
-    fake_db_products = [p for p in fake_db_products if p["ProductID"] != product_id]
+@router.delete(
+    "/{product_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        404: {"model": HTTPError, "description": "Integrity Error: Staff has linked orders"},
+    }
+)
+async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
+    db_product = await db.get(ProductModel, product_id)
+    if not db_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    try:
+        await db.delete(db_product)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="無法刪除：該商品尚有庫存紀錄或存在於交易單據中(如進貨單、領料單)。"
+        )
     return None
