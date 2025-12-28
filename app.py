@@ -204,18 +204,25 @@ def inbound_page():
 @app.route('/inbound/add', methods=['GET', 'POST'])
 def add_inbound():
     if request.method == 'POST':
+        product_ids = request.form.getlist('product_ids[]')
+        quantities = request.form.getlist('quantities[]')
+        warehouse_ids = request.form.getlist('warehouse_ids[]')
+
+        details_payload = []
+        for i in range(len(product_ids)):
+            details_payload.append({
+                "ProductID": int(product_ids[i]),
+                "idQuantity": int(quantities[i]),
+                "WarehouseID": int(warehouse_ids[i])
+            })
+
         payload = {
             "ioDate": request.form['ioDate'],
             "SupplierID": int(request.form['SupplierID']),
             "StaffID": int(request.form['StaffID']),
-            "details": [
-                {
-                    "ProductID": int(request.form['ProductID']),
-                    "idQuantity": int(request.form['ioQuantity']),
-                    "WarehouseID": int(request.form['WarehouseID'])
-                }
-            ]
+            "details": details_payload  
         }
+
         try:
             response = requests.post(f"{API_BASE_URL}/inbound/", json=payload)
             if response.status_code == 201:
@@ -270,34 +277,42 @@ def requisition_page():
     # 讀取 requisitions.html (複數)
     return render_template('requisitions.html', req_list=req_list)
 
-@app.route('/requisitions/add', methods=['GET', 'POST']) # <--- 網址改成有 s
+@app.route('/requisitions/add', methods=['GET', 'POST'])
 def add_requisition():
     if request.method == 'POST':
+        # 1. 讀取陣列資料
+        product_ids = request.form.getlist('product_ids[]')
+        quantities = request.form.getlist('quantities[]')
+        warehouse_ids = request.form.getlist('warehouse_ids[]')
+
+        # 2. 組合 details 列表
+        details_payload = []
+        for i in range(len(product_ids)):
+            details_payload.append({
+                "ProductID": int(product_ids[i]),
+                "rdQuantity": int(quantities[i]), # 注意：領料單的欄位是 rdQuantity
+                "WarehouseID": int(warehouse_ids[i])
+            })
+
+        # 3. 建立主單 Payload
         payload = {
             "reDate": request.form['reDate'],
             "reReason": request.form['reReason'],
             "StaffID": int(request.form['StaffID']),
-            "details": [
-                {
-                    "ProductID": int(request.form['ProductID']),
-                    "rdQuantity": int(request.form['rdQuantity']),
-                    "WarehouseID": int(request.form['WarehouseID'])
-                }
-            ]
+            "details": details_payload
         }
         
         try:
             response = requests.post(f"{API_BASE_URL}/requisitions/", json=payload)
             if response.status_code == 201:
-                flash('領料單建立成功！', 'success')
-                # 導向回去也要改成複數
+                flash(f'領料單建立成功！共包含 {len(details_payload)} 筆商品。', 'success')
                 return redirect(url_for('requisition_page'))
             else:
                 flash(f'建立失敗：{response.text}', 'danger')
         except Exception as e:
             flash(f'連線錯誤：{str(e)}', 'danger')
 
-    # GET: 準備選單資料
+    # GET: 準備選單資料 (保持不變)
     products, warehouses, staff_list = [], [], []
     try:
         products = requests.get(f"{API_BASE_URL}/products/").json()
@@ -306,7 +321,6 @@ def add_requisition():
     except:
         pass
 
-    # 讀取 add_requisitions.html (複數)
     return render_template('add_requisitions.html', 
                          products=products, 
                          warehouses=warehouses, 
