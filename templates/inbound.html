@@ -60,11 +60,11 @@
                         <tr>
                             <th>單號</th>
                             <th>進貨日期</th>
-                            <th>商品 ID</th>
+                            <th>商品</th>
                             <th>數量</th>
-                            <th>倉庫 ID</th>
-                            <th>供應商 ID</th>
-                            <th>員工 ID</th>
+                            <th>倉庫名稱</th>
+                            <th>供應商名稱</th>
+                            <th>員工名稱</th>
                             <th class="text-end pe-4">操作</th>
                         </tr>
                     </thead>
@@ -74,18 +74,22 @@
                             <td>{{ order.InboundID }}</td>
                             <td class="fw-bold">{{ order.ioDate }}</td>
                             
-                            {% if order.details and order.details|length > 0 %}
-                                <td><span class="badge bg-info text-dark">Prod: {{ order.details[0].ProductID }}</span></td>
-                                <td class="fw-bold text-success">{{ order.details[0].idQuantity }}</td>
-                                <td>{{ order.details[0].WarehouseID }}</td>
-                            {% else %}
-                                <td colspan="3" class="text-muted text-center">無明細</td>
-                            {% endif %}
+                            <td>
+                                <span class="badge bg-secondary">{{ order.details|length }} 筆明細</span>
+                            </td>
+                            <td colspan="2">
+                                <button class="btn btn-sm btn-info text-white" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#detailModal"
+                                        onclick='showDetails({{ order.details|tojson }})'>
+                                    <i class="fas fa-eye me-1"></i> 查看商品明細
+                                </button>
+                            </td>
 
-                            <td>{{ order.SupplierID }}</td>
-                            <td>{{ order.StaffID }}</td>
+                            <td>{{ order.supplier.suName }}</td>
+                            <td>{{ order.staff.stName }}</td>
                             <td class="text-end pe-3">
-                                <form action="/inbound/delete/{{ order.InboundID }}" method="POST" class="d-inline" onsubmit="return confirm('確定要刪除嗎？');">
+                                <form action="/inbound/delete/{{ order.InboundID }}" method="POST" class="d-inline" onsubmit="return confirm('刪除主單將連同刪除所有明細，確定嗎？');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i></button>
                                 </form>
                             </td>
@@ -101,6 +105,34 @@
         </div>
     </div>
 
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title"><i class="fas fa-boxes me-2"></i>進貨單明細內容</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>商品名稱/ID</th>
+                        <th>進貨數量</th>
+                        <th>存放倉庫</th>
+                    </tr>
+                </thead>
+                <tbody id="modalBodyContent">
+                    </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById("searchInput").addEventListener("keyup", function() {
             var value = this.value.toLowerCase(); // 把輸入的字變小寫
@@ -121,6 +153,32 @@
                 }
             });
         });
+
+        function showDetails(details) {
+            const tbody = document.getElementById('modalBodyContent');
+            tbody.innerHTML = ''; // 清空舊資料
+            
+            if (!details || details.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center">無明細資料</td></tr>';
+                return;
+            }
+
+            details.forEach(item => {
+                // 處理可能為空的關聯物件 (預防報錯)
+                const prodName = item.product ? item.product.prName : 'Unknown Product';
+                const prodId = item.ProductID;
+                const waName = item.warehouse ? item.warehouse.waName : 'Unknown Warehouse';
+                
+                const row = `
+                    <tr>
+                        <td>${prodName} <span class="text-muted text-small">(${prodId})</span></td>
+                        <td class="fw-bold text-success">${item.idQuantity}</td>
+                        <td>${waName}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
     </script>
 </body>
 </html>
